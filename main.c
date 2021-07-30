@@ -1,21 +1,20 @@
 #include <stdlib.h>
 
 int         rules(int neighbours, int own_state) {
-    switch(n) {
-        case constant-expression  :
-            statement(s);
-            break;
-            case constant-expression  :
-                statement(s);
-                break; /* optional */
-
-                /* you can have any number of case statements */
-                default : /* Optional */
-                statement(s);
+    if (own_state) //alive rules
+    {
+        if (neighbours == 2 || neighbours == 3)
+            return 1;
     }
+    else //dead rules
+    {
+        if (neighbours == 3)
+            return 1;
+    }
+    return 0;
 }
 
-int         init_universe(int **cells, int rows, int cols) {
+int         **init_universe(int **cells, int rows, int cols) {
     while (rows--) {
         while (cols--) {
             cells[rows][cols] = 0;
@@ -43,29 +42,28 @@ int         **new_universe(int rows, int cols) {
     return init_universe(cells, rows, cols);
 }
 
-/*
-int         min(int a, int b) {
-    return a < b ? a : b;
-}
-
-int         max(int a, int b) {
-    return a > b ? a : b;
-}
-*/
-
-int         border_check(int coord, int limit) {
-    return
+int         border_check(int coord, int *limit) {
+    if (coord < 0) {
+        *limit = 0;
+        return 0;
+    }
+    if (coord >= *limit) {
+        *limit = *limit - 1;
+        return 0;
+    }
+    (*limit)--;
+    return 1;
 }
 
 int         iter_cell(int **cells, int y, int x, int rows, int cols) {
     int     j, i;
-    /*
-    int     lim_x = max(0, min(x + 1, --cols)); //border_check
-    int     lim_y = max(0, min(y + 1, --rows)); //border_check
-    */
+    int     lim_y = rows, lim_x = cols;
     int     neighbours = 0;
     int     own_state;
 
+    if ((own_state = border_check(y, &lim_y) * border_check(x, &lim_x))) { //border and self state check
+        own_state = cells[y][x];
+    }
     for(j = y - 1; j <= lim_y; j++) {
         for(i = x - 1; i <= lim_x; i++) {
             if ((cells[j][i]) && !((i == x) && (j == y))) { //self_check
@@ -73,7 +71,7 @@ int         iter_cell(int **cells, int y, int x, int rows, int cols) {
             }
         }
     }
-    return rules(neighbours, cells[y][x]);
+    return rules(neighbours, own_state);
 }
 
 int         **step(int **cells, int *rowptr, int *colptr) {
