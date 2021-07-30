@@ -66,45 +66,31 @@ int         **new_universe(int rows, int cols) {
     return init_universe(cells, rows, cols);
 }
 
-int         border_check(int coord, int *limit) {
-    if (coord < 0) {
-        *limit = 0;
-        return 0;
-    }
-    if (coord >= *limit) {
-        *limit -= 1;
-        return 0;
-    }
-    (*limit)--;
-    return 1;
+int         min(int a, int b) {
+    return a < b ? a : b;
 }
 
 int         max(int a, int b) {
     return a > b ? a : b;
 }
 
-int         min(int a, int b) {
-    return a < b ? a : b;
-}
-
 int         iter_cell(int **cells, int y, int x, int rows, int cols) {
     int     j, i;
-    int     lim_y = rows, lim_x = cols;
+    int     lim_y = min(rows - 1, y + 1);
+    int     lim_x = min(cols - 1, x + 1);
     int     neighbours = 0;
     int     own_state;
 
-    if ((own_state = border_check(y, &lim_y) * border_check(x, &lim_x))) { //border and self state check
+    if ((x < 0 || x > lim_x) || (y < 0 || y > lim_y))
+        own_state = 0;
+    else
         own_state = cells[y][x];
-    }
-    for (j = max(0, y - 1); j <= min(lim_y, y + 1); j++) {
-        for (i = max(0, x - 1); i <= min(lim_x, x + 1); i++) {
-            if ((cells[j][i]) && !((i == x) && (j == y))) { //self_check
+
+    for (j = max(0, y - 1); j <= lim_y; j++)
+        for (i = max(0, x - 1); i <= lim_x; i++)
+            if ((cells[j][i]) && (!((x == i) && (y == j))))
                 neighbours++;
-            }
-        }
-    }
-    //if (neighbours != 0)
-    //    printf("x: %d y: %d neighbours: %d\n", x, y, neighbours);
+
     return rules(neighbours, own_state);
 }
 
@@ -154,7 +140,7 @@ void        populate_border(int **cells, int rows, int cols, //expand up-down
         }
     }
     tmp = border + 2 * rows + 1;
-    if (expand & 0b1000)
+    if (expand & 0b0100)
     {
         for (i = 1; i < lim_x; i++)
         {
@@ -179,20 +165,35 @@ int                 **step(int **cells, int *rowptr, int *colptr) {
     tmp = border;
     for (j = -1; j <= *rowptr; j++) {
         if ((*tmp = iter_cell(cells, j, -1, *rowptr, *colptr)))
+        {
             expand |= 0b0010;
+            printf("BORDER\n");
+        }
         tmp++;
         if ((*tmp = iter_cell(cells, j, *colptr, *rowptr, *colptr)))
+        {
             expand |= 0b0001;
+            printf("BORDER\n");
+        }
         tmp++;
     }
     for (i = 0; i < *colptr; i++) {
         if ((*tmp = iter_cell(cells, -1, i, *rowptr, *colptr)))
+        {
             expand |= 0b1000;
+            printf("BORDER\n");
+        }
         tmp++;
         if ((*tmp = iter_cell(cells, *rowptr, i, *rowptr, *colptr)))
+        {
             expand |= 0b0100;
+            printf("BORDER\n");
+        }
         tmp++;
     }
+
+    old_row = *rowptr;
+    old_col = *colptr;
 
     *colptr += (expand & 0b0001); //right
     *colptr += (expand >> 1 & 0b0001); //left
@@ -204,11 +205,9 @@ int                 **step(int **cells, int *rowptr, int *colptr) {
     //printf("%d\n", (expand >> 2 & 0b0001));
     //printf("%d\n", (expand >> 3 & 0b0001));
 
-    old_row = *rowptr;
-    old_col = *colptr;
-
     new_cells = new_universe(*rowptr, *colptr); //this function could change row/col
     populate_border(new_cells, *rowptr, *colptr, border, expand);
+    free(border);
 
     for (j = 0; j < old_row; j++) {
         for (i = 0; i < old_col; i++) {
@@ -224,6 +223,7 @@ int                 **step(int **cells, int *rowptr, int *colptr) {
         free(*cells);
         cells++;
     }
+    free(tmp2);
 
     return new_cells;
 }
@@ -235,23 +235,21 @@ int         **get_generation(int **cells, int generations, int *rowptr, int *col
 }
 
 int         main() {
-    int     rows = 8, cols = 8;
+    int     rows = 3, cols = 3;
     int     **universe = new_universe(rows, cols);
     int     **tmp;
     int     **tmp2;
-    int     i = rows;
+    int     i;
 
-    universe[2][3] = 1; //.#.
-    universe[3][4] = 1; //..#
-    universe[4][2] = 1; //###
-    universe[4][3] = 1;
-    universe[4][4] = 1;
+    universe[0][1] = 1; //.#.
+    universe[1][2] = 1; //..#
+    universe[2][0] = 1; //###
+    universe[2][1] = 1;
+    universe[2][2] = 1;
 
-    //print_universe(universe, rows, cols);
-    //write(1, "\n", 1);
-    //print_universe(tmp = get_generation(universe, 1, &rows, &cols), rows, cols);
-    //free(tmp);
-    print_universe(tmp = get_generation(universe, 13, &rows, &cols), rows, cols);
+    i = rows;
+    print_universe(tmp = get_generation(universe, 1, &rows, &cols), rows, cols);
+    write(1, "\n", 1);
     tmp2 = tmp;
     while (i--)
     {
@@ -259,8 +257,17 @@ int         main() {
         tmp++;
     }
     free(tmp2);
-    //write(1, "\n", 1);
-    //print_universe(tmp = get_generation(universe, 2, &rows, &cols), rows, cols);
-    //free(tmp);
+/*
+    i = rows;
+    print_universe(tmp = get_generation(universe, 1, &rows, &cols), rows, cols);
+    write(1, "\n", 1);
+    tmp2 = tmp;
+    while (i--)
+    {
+        free(*tmp);
+        tmp++;
+    }
+    free(tmp2);
+*/
     return 0;
 }
