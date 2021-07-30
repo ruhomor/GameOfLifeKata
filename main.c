@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdio.h>
 
 int         rules(int neighbours, int own_state) {
     if (own_state) //alive rules
@@ -16,9 +17,12 @@ int         rules(int neighbours, int own_state) {
 }
 
 int         **init_universe(int **cells, int rows, int cols) {
+    int     i;
+
     while (rows--) {
-        while (cols--) {
-            cells[rows][cols] = 0;
+        i = cols;
+        while (i--) {
+            cells[rows][i] = 0;
         }
     }
     return cells;
@@ -26,15 +30,21 @@ int         **init_universe(int **cells, int rows, int cols) {
 
 void        print_universe(int **cells, int rows, int cols) {
     char    *str = (typeof(str))malloc(sizeof(*str) * cols); //TODO no memalloc check
+    char    *tmp = str;
     int     i, j;
 
     for (j = 0; j < rows; j++)
     {
+        str = tmp;
         for (i = 0; i < cols; i++)
+        {
             *str = cells[j][i] + 48; //on purpose
-        write(1, str, cols);
+            str++;
+        }
+        write(1, tmp, cols);
+        write(1, "\n", 1);
     }
-    free(str); //might crash because again TODO no memalloc check
+    free(tmp); //might crash because again TODO no memalloc check
 }
 
 int         **new_universe(int rows, int cols) {
@@ -69,6 +79,14 @@ int         border_check(int coord, int *limit) {
     return 1;
 }
 
+int         max(int a, int b) {
+    return a > b ? a : b;
+}
+
+int         min(int a, int b) {
+    return a < b ? a : b;
+}
+
 int         iter_cell(int **cells, int y, int x, int rows, int cols) {
     int     j, i;
     int     lim_y = rows, lim_x = cols;
@@ -78,13 +96,15 @@ int         iter_cell(int **cells, int y, int x, int rows, int cols) {
     if ((own_state = border_check(y, &lim_y) * border_check(x, &lim_x))) { //border and self state check
         own_state = cells[y][x];
     }
-    for (j = y - 1; j <= lim_y; j++) {
-        for (i = x - 1; i <= lim_x; i++) {
+    for (j = max(0, y - 1); j <= min(lim_y, y + 1); j++) {
+        for (i = max(0, x - 1); i <= min(lim_x, x + 1); i++) {
             if ((cells[j][i]) && !((i == x) && (j == y))) { //self_check
                 neighbours++;
             }
         }
     }
+    //if (neighbours != 0)
+    //    printf("x: %d y: %d neighbours: %d\n", x, y, neighbours);
     return rules(neighbours, own_state);
 }
 
@@ -178,6 +198,11 @@ int                 **step(int **cells, int *rowptr, int *colptr) {
     *rowptr += (expand >> 2 & 0b0001); //down
     *rowptr += (expand >> 3 & 0b0001); //up
 
+    printf("%d\n", (expand & 0b0001));
+    printf("%d\n", (expand >> 1 & 0b0001));
+    printf("%d\n", (expand >> 2 & 0b0001));
+    printf("%d\n", (expand >> 3 & 0b0001));
+
     old_row = *rowptr;
     old_col = *colptr;
 
@@ -200,16 +225,24 @@ int         **get_generation(int **cells, int generations, int *rowptr, int *col
 }
 
 int         main() {
-    int     **universe = new_universe(5, 5);
-    int     rows = 5, cols = 5;
+    int     rows = 8, cols = 8;
+    int     **universe = new_universe(rows, cols);
+    int     **tmp;
 
-    universe[0][0] = 1; //#..
-    universe[1][1] = 1; //.##
-    universe[1][2] = 1; //##.
-    universe[2][0] = 1;
-    universe[2][1] = 1;
+    universe[2][3] = 1; //.#.
+    universe[3][4] = 1; //..#
+    universe[4][2] = 1; //###
+    universe[4][3] = 1;
+    universe[4][4] = 1;
 
-    print_universe(get_generation(universe, 1, &rows, &cols), rows, cols);
-    print_universe(get_generation(universe, 2, &rows, &cols), rows, cols);
+    print_universe(universe, rows, cols);
+    write(1, "\n", 1);
+    //print_universe(tmp = get_generation(universe, 1, &rows, &cols), rows, cols);
+    //free(tmp);
+    print_universe(tmp = get_generation(universe, 12, &rows, &cols), rows, cols);
+    free(tmp);
+    //write(1, "\n", 1);
+    //print_universe(tmp = get_generation(universe, 2, &rows, &cols), rows, cols);
+    //free(tmp);
     return 0;
 }
