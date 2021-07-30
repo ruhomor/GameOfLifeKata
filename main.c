@@ -98,55 +98,62 @@ void        populate_border(int **cells, int rows, int cols, //expand up-down
                             int *border, unsigned int expand) { //left-right
     int     i, j;
     int     *tmp;
-    int     lim_x = cols - 1, lim_y = rows - 1;
 
     if ((expand & 0b1000) && (expand & 0b0010)) //up-left
         cells[0][0] = *border;
     if ((expand & 0b1000) && (expand & 0b0001)) //up-right
-        cells[0][lim_x] = *(border + 1);
+        cells[0][cols] = *(border + 1);
     if ((expand & 0b0100) && (expand & 0b0010)) //down-left
-        cells[lim_y][0] = *(border + 2 * rows - 2);
+        cells[rows][0] = *(border + 2 * rows + 2);
     if ((expand & 0b0100) && (expand & 0b0001)) //down-right
-        cells[lim_y][lim_x] = *(border + 2 * rows - 1);
+        cells[rows][cols] = *(border + 2 * rows + 3);
 
-    tmp = border + 1;
     if (expand & 0b0010)
     {
-        for (j = 1; j < lim_y; j++)
+        tmp = border + 2;
+        for (j = (expand >> 3 & 0b0001); j < rows + (expand >> 2 & 0b0001); j++)
         {
             cells[j][0] = *tmp;
+            //printf("%d ", *tmp);
             tmp++;
             tmp++;
+            //printf("POPULATING LEFT\n");
         }
     }
-    tmp = border + 2;
     if (expand & 0b0001)
     {
-        for (j = 1; j < lim_y; j++)
+        tmp = border + 3;
+        for (j = (expand >> 3 & 0b0001); j < rows + (expand >> 2 & 0b0001); j++)
         {
-            cells[j][lim_x] = *tmp;
+            cells[j][cols] = *tmp;
+            //printf("%d ", *tmp);
             tmp++;
             tmp++;
+            //printf("POPULATING RIGHT\n");
         }
     }
-    tmp = border + 2 * rows;
     if (expand & 0b1000)
     {
-        for (i = 1; i < lim_x; i++)
+        tmp = border + 2 * rows + 4;
+        for (i = (expand >> 1 & 0b0001); i < cols + (expand & 0b0001); i++)
         {
             cells[0][i] = *tmp;
+            //printf("%d ", *tmp);
             tmp++;
             tmp++;
+            //printf("POPULATING UP\n");
         }
     }
-    tmp = border + 2 * rows + 1;
     if (expand & 0b0100)
     {
-        for (i = 1; i < lim_x; i++)
+        tmp = border + 2 * rows + 5;
+        for (i = (expand >> 1 & 0b0001); i < cols + (expand & 0b0001); i++)
         {
-            cells[lim_y][i] = *tmp;
+            cells[rows][i] = *tmp;
+            //printf("%d ", *tmp);
             tmp++;
             tmp++;
+            //printf("POPULATING DOWN\n");
         }
     }
 }
@@ -160,35 +167,43 @@ int                 **step(int **cells, int *rowptr, int *colptr) {
     int             old_row, old_col;
     int             **tmp2;
 
-    if (!(border = (typeof(border))malloc(sizeof(*border) * (*rowptr + *colptr) * 2)))
+    if (!(border = (typeof(border))malloc(sizeof(*border) * (*rowptr + *colptr) * 2 + 4)))
         return NULL;
     tmp = border;
     for (j = -1; j <= *rowptr; j++) {
         if ((*tmp = iter_cell(cells, j, -1, *rowptr, *colptr)))
         {
             expand |= 0b0010;
-            printf("BORDER\n");
+            //printf("BORDER\n");
         }
+        //printf("LEFT BORDER ");
+        //printf("%d\n", *tmp);
         tmp++;
         if ((*tmp = iter_cell(cells, j, *colptr, *rowptr, *colptr)))
         {
             expand |= 0b0001;
-            printf("BORDER\n");
+            //printf("BORDER\n");
         }
+        //printf("RIGHT BORDER ");
+        //printf("%d\n", *tmp);
         tmp++;
     }
     for (i = 0; i < *colptr; i++) {
         if ((*tmp = iter_cell(cells, -1, i, *rowptr, *colptr)))
         {
             expand |= 0b1000;
-            printf("BORDER\n");
+            //printf("BORDER\n");
         }
+        //printf("UP BORDER ");
+        //printf("%d\n", *tmp);
         tmp++;
         if ((*tmp = iter_cell(cells, *rowptr, i, *rowptr, *colptr)))
         {
             expand |= 0b0100;
-            printf("BORDER\n");
+            //printf("BORDER\n");
         }
+        //printf("DOWN BORDER ");
+        //printf("%d\n", *tmp);
         tmp++;
     }
 
@@ -206,12 +221,12 @@ int                 **step(int **cells, int *rowptr, int *colptr) {
     //printf("%d\n", (expand >> 3 & 0b0001));
 
     new_cells = new_universe(*rowptr, *colptr); //this function could change row/col
-    populate_border(new_cells, *rowptr, *colptr, border, expand);
+    populate_border(new_cells, old_row, old_col, border, expand);
     free(border);
 
     for (j = 0; j < old_row; j++) {
         for (i = 0; i < old_col; i++) {
-            new_cells[j + (expand >> 2 & 0b0001)][i + (expand >> 1 & 0b0001)]
+            new_cells[j][i]
             = iter_cell(cells, j, i, old_row, old_col);
         }
     }
@@ -248,7 +263,13 @@ int         main() {
     universe[2][2] = 1;
 
     i = rows;
-    print_universe(tmp = get_generation(universe, 1, &rows, &cols), rows, cols);
+    print_universe(tmp = get_generation(universe, 0, &rows, &cols), rows, cols);
+    write(1, "\n", 1);
+    print_universe(tmp = get_generation(tmp, 1, &rows, &cols), rows, cols);
+    write(1, "\n", 1);
+    print_universe(tmp = get_generation(tmp, 2, &rows, &cols), rows, cols);
+    write(1, "\n", 1);
+    print_universe(tmp = get_generation(tmp, 3, &rows, &cols), rows, cols);
     write(1, "\n", 1);
     tmp2 = tmp;
     while (i--)
