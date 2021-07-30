@@ -64,8 +64,8 @@ int         iter_cell(int **cells, int y, int x, int rows, int cols) {
     if ((own_state = border_check(y, &lim_y) * border_check(x, &lim_x))) { //border and self state check
         own_state = cells[y][x];
     }
-    for(j = y - 1; j <= lim_y; j++) {
-        for(i = x - 1; i <= lim_x; i++) {
+    for (j = y - 1; j <= lim_y; j++) {
+        for (i = x - 1; i <= lim_x; i++) {
             if ((cells[j][i]) && !((i == x) && (j == y))) { //self_check
                 neighbours++;
             }
@@ -75,7 +75,31 @@ int         iter_cell(int **cells, int y, int x, int rows, int cols) {
 }
 
 int         **step(int **cells, int *rowptr, int *colptr) {
+    int     j, i;
+    int     *border;
+    int     *tmp;
 
+    if (!(border = (typeof(border))malloc(sizeof(*border) * (*rowptr + *colptr) * 2)))
+        return NULL;
+    tmp = border;
+    for (j = -1; j <= *rowptr; j++) {
+        *tmp = iter_cell(cells, j, -1, *rowptr, *colptr);
+        tmp++;
+        *tmp = iter_cell(cells, j, *colptr, *rowptr, *colptr);
+        tmp++;
+    }
+    for (i = 0; i < *colptr; i++) {
+        *tmp = iter_cell(cells, -1, i, *rowptr, *colptr);
+        tmp++;
+        *tmp = iter_cell(cells, *rowptr, i, *rowptr, *colptr);
+        tmp++;
+    }
+
+    for (j = 0; j < *rowptr; j++) {
+        for (i = 0; i < *colptr; i++) {
+
+        }
+    }
 }
 
 int         **get_generation(int **cells, int generations, int *rowptr, int *colptr) {
