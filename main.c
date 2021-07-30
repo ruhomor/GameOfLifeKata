@@ -172,6 +172,7 @@ int                 **step(int **cells, int *rowptr, int *colptr) {
     int             **new_cells;
     unsigned int    expand = 0b0000; //Up Down Left Right
     int             old_row, old_col;
+    int             **tmp2;
 
     if (!(border = (typeof(border))malloc(sizeof(*border) * (*rowptr + *colptr) * 2)))
         return NULL;
@@ -198,10 +199,10 @@ int                 **step(int **cells, int *rowptr, int *colptr) {
     *rowptr += (expand >> 2 & 0b0001); //down
     *rowptr += (expand >> 3 & 0b0001); //up
 
-    printf("%d\n", (expand & 0b0001));
-    printf("%d\n", (expand >> 1 & 0b0001));
-    printf("%d\n", (expand >> 2 & 0b0001));
-    printf("%d\n", (expand >> 3 & 0b0001));
+    //printf("%d\n", (expand & 0b0001));
+    //printf("%d\n", (expand >> 1 & 0b0001));
+    //printf("%d\n", (expand >> 2 & 0b0001));
+    //printf("%d\n", (expand >> 3 & 0b0001));
 
     old_row = *rowptr;
     old_col = *colptr;
@@ -215,6 +216,15 @@ int                 **step(int **cells, int *rowptr, int *colptr) {
             = iter_cell(cells, j, i, old_row, old_col);
         }
     }
+
+    tmp2 = cells; //memory freeing
+    i = old_row;
+    while (i--)
+    {
+        free(*cells);
+        cells++;
+    }
+
     return new_cells;
 }
 
@@ -228,6 +238,8 @@ int         main() {
     int     rows = 8, cols = 8;
     int     **universe = new_universe(rows, cols);
     int     **tmp;
+    int     **tmp2;
+    int     i = rows;
 
     universe[2][3] = 1; //.#.
     universe[3][4] = 1; //..#
@@ -235,12 +247,18 @@ int         main() {
     universe[4][3] = 1;
     universe[4][4] = 1;
 
-    print_universe(universe, rows, cols);
-    write(1, "\n", 1);
+    //print_universe(universe, rows, cols);
+    //write(1, "\n", 1);
     //print_universe(tmp = get_generation(universe, 1, &rows, &cols), rows, cols);
     //free(tmp);
-    print_universe(tmp = get_generation(universe, 12, &rows, &cols), rows, cols);
-    free(tmp);
+    print_universe(tmp = get_generation(universe, 13, &rows, &cols), rows, cols);
+    tmp2 = tmp;
+    while (i--)
+    {
+        free(*tmp);
+        tmp++;
+    }
+    free(tmp2);
     //write(1, "\n", 1);
     //print_universe(tmp = get_generation(universe, 2, &rows, &cols), rows, cols);
     //free(tmp);
