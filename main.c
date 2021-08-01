@@ -205,10 +205,10 @@ int                 **expand(int **cells, t_borders borders, int *rowptr, int *c
     int             old_cols = *colptr, old_rows = *rowptr;
     int             **expanded_universe;
 
-    expand |= check_border(borders.left_border, *colptr + 2, LEFT);
-    expand |= check_border(borders.right_border, *colptr + 2, RIGHT);
-    expand |= check_border(borders.top_border, *rowptr + 2, TOP);
-    expand |= check_border(borders.bot_border, *rowptr + 2, BOTTOM);
+    expand |= check_border(borders.left_border, *rowptr + 2, LEFT);
+    expand |= check_border(borders.right_border, *rowptr + 2, RIGHT);
+    expand |= check_border(borders.top_border, *colptr + 2, TOP);
+    expand |= check_border(borders.bot_border, *colptr + 2, BOTTOM);
 
     if (expand & LEFT)
         (*colptr)++;
@@ -372,6 +372,7 @@ int         main() {
     while (1) {
         print_universe(tmp = get_generation(tmp, 1, &rows, &cols), rows, cols);
         write(1, "\n", 1);
+    //print_universe(tmp = get_generation(tmp, 6, &rows, &cols), rows, cols);
         getchar();
     }
     return 0;
