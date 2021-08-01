@@ -183,19 +183,19 @@ void                populate_borders(int **cells, t_borders borders, unsigned in
     shift_x = (expand & LEFT) ? 0 : 1;
 
     if (expand & LEFT) { //if expanded left
-        for (i = 0; i < cols; i++)
+        for (i = 0; i < rows; i++)
             cells[i][0] = borders.left_border[i + shift_y];
     }
     if (expand & TOP) { //if expanded top
-        for (i = 0; i < rows; i++)
+        for (i = 0; i < cols; i++)
             cells[0][i] = borders.top_border[i + shift_x];
     }
     if (expand & RIGHT) {
-        for (i = 0; i < cols; i++)
+        for (i = 0; i < rows; i++)
             cells[i][cols - 1] = borders.right_border[i + shift_y];
     }
     if (expand & BOTTOM) {
-        for (i = 0; i < rows; i++)
+        for (i = 0; i < cols; i++)
             cells[rows - 1][i] = borders.bot_border[i + shift_x];
     }
 }
@@ -222,6 +222,10 @@ int                 **expand(int **cells, t_borders borders, int *rowptr, int *c
     expanded_universe = new_universe(*rowptr, *colptr);
     copy_universe_exp(cells, expanded_universe, expand, old_rows, old_cols);
     destroy_universe(cells, old_rows);
+    printf("\n");
+    printf("BEFORE BORDERS\n");
+    print_universe(expanded_universe, *rowptr, *colptr);
+    printf("\n");
     populate_borders(expanded_universe, borders, expand, *rowptr, *colptr);
     return expanded_universe;
 }
@@ -329,20 +333,20 @@ int         main() {
     int     **tmp;
     int     **tmp2;
     int     i;
-
+/*
     universe[0][1] = 1; //.#. DOWN TEST
     universe[1][2] = 1; //..#
     universe[2][0] = 1; //###
     universe[2][1] = 1;
     universe[2][2] = 1;
+*/
 
-/*
     universe[0][2] = 1; //..# RIGHT TEST
     universe[1][0] = 1; //#.#
     universe[1][2] = 1; //.##
     universe[2][1] = 1;
     universe[2][2] = 1;
-*/
+
 /*
     universe[0][0] = 1; //#.. LEFT TEST
     universe[1][0] = 1; //#.#
