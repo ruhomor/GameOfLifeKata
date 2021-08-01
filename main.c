@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <unistd.h>
-#include <stdio.h>
 
 int         rules(int neighbours, int own_state) {
     if (own_state) //alive rules
@@ -72,143 +71,54 @@ int         max(int a, int b) {
     return a > b ? a : b;
 }
 
-int         iter_cell(int **cells, int y, int x, int rows, int cols) {
-    int     j, i;
-    int     lim_y = min(rows - 1, y + 1);
-    int     lim_x = min(cols - 1, x + 1);
+int         *alloc_border(int size) {
+    return (int*)malloc(sizeof(int) * (size + 2)); //+2 for possible expansion
+}
+
+int         iter_cell(int **cells, int x, int y, int cols, int rows) {
+    int     own_state = 0;
     int     neighbours = 0;
-    int     own_state;
+    int     j, i;
 
-    if ((x < 0 || x > lim_x) || (y < 0 || y > lim_y))
-        own_state = 0;
-    else
-        own_state = cells[y][x];
-
-    for (j = max(0, y - 1); j <= lim_y; j++)
-        for (i = max(0, x - 1); i <= lim_x; i++)
-            if ((cells[j][i]) && (!((x == i) && (y == j))))
+    cols = min(cols - 1, x + 1);
+    rows = min(rows - 1, y + 1);
+    for (j = max(0, y - 1);  j <= rows; j++) {
+        for (i = max(0, x - 1), i <= cols; i++) {
+            if (!((i == x) && (j == y)))
                 neighbours++;
-
+            else
+                own_state = cells[y][x];
+        }
+    }
     return rules(neighbours, own_state);
 }
 
-void        populate_border(int **cells, int rows, int cols, //expand up-down
-                            int *border, unsigned int expand) { //left-right
+int         **step(int **cells, int *rowptr, int *colptr) {
+    //plan
+    //eval and store border
+    //eval self
+    //expand
+    //populate border
+    //contract
+    int     *top_border = alloc_border(*colptr);
+    int     *bot_border = alloc_border(*colptr);
+    int     *left_border = alloc_border(*rowptr);
+    int     *right_border = alloc_border(*rowptr);
     int     i, j;
-    int     *tmp;
 
-    if ((expand & 0b1000) && (expand & 0b0010)) //up-left
-        cells[0][0] = *border;
-    if ((expand & 0b1000) && (expand & 0b0001)) //up-right
-        cells[0][cols] = *(border + 1);
-    if ((expand & 0b0100) && (expand & 0b0010)) //down-left
-        cells[rows][0] = *(border + 2 * rows + 2);
-    if ((expand & 0b0100) && (expand & 0b0001)) //down-right
-        cells[rows][cols] = *(border + 2 * rows + 3);
-
-    if (expand & 0b0010)
-    {
-        tmp = border + 2;
-        for (j = (expand >> 3 & 0b0001); j < rows + (expand >> 2 & 0b0001); j++)
-        {
-            cells[j][0] = *tmp;
-            tmp++;
-            tmp++;
-        }
+    for (i = -1; i <= *colptr; i++) {
+        top_border[i] = iter_cell(cells, i, -1, *colptr, *rowptr);
+        bot_border[i] = iter_cell(cells, i, *rowptr + 1, *colptr, *rowptr);
     }
-    if (expand & 0b0001)
-    {
-        tmp = border + 3;
-        for (j = (expand >> 3 & 0b0001); j < rows + (expand >> 2 & 0b0001); j++)
-        {
-            cells[j][cols] = *tmp;
-            tmp++;
-            tmp++;
-        }
-    }
-    if (expand & 0b1000)
-    {
-        tmp = border + 2 * rows + 4;
-        for (i = (expand >> 1 & 0b0001); i < cols + (expand & 0b0001); i++)
-        {
-            cells[0][i] = *tmp;
-            tmp++;
-            tmp++;
-        }
-    }
-    if (expand & 0b0100)
-    {
-        tmp = border + 2 * rows + 5;
-        for (i = (expand >> 1 & 0b0001); i < cols + (expand & 0b0001); i++)
-        {
-            cells[rows][i] = *tmp;
-            tmp++;
-            tmp++;
-        }
-    }
-}
-
-int                 **step(int **cells, int *rowptr, int *colptr) {
-    int             j, i;
-    int             *border;
-    int             *tmp;
-    int             **new_cells;
-    unsigned int    expand = 0b0000; //Up Down Left Right
-    int             old_row, old_col;
-    int             **tmp2;
-
-    if (!(border = (typeof(border))malloc(sizeof(*border) * (*rowptr + *colptr) * 2 + 4)))
-        return NULL;
-    tmp = border;
     for (j = -1; j <= *rowptr; j++) {
-        if ((*tmp = iter_cell(cells, j, -1, *rowptr, *colptr)))
-            expand |= 0b0010;
-        tmp++;
-        if ((*tmp = iter_cell(cells, j, *colptr, *rowptr, *colptr)))
-            expand |= 0b0001;
-        tmp++;
+        left_border[j] = iter_cell(cells, -1, j, *colptr, *rowptr);
+        right_border[j] = iter_cell(cells, *colptr + 1, j, *colptr, *rowptr);
     }
-    for (i = 0; i < *colptr; i++) {
-        if ((*tmp = iter_cell(cells, -1, i, *rowptr, *colptr)))
-            expand |= 0b1000;
-        tmp++;
-        if ((*tmp = iter_cell(cells, *rowptr, i, *rowptr, *colptr)))
-            expand |= 0b0100;
-        tmp++;
-    }
-
-    old_row = *rowptr;
-    old_col = *colptr;
-
-    *colptr += (expand & 0b0001); //right
-    *colptr += (expand >> 1 & 0b0001); //left
-    *rowptr += (expand >> 2 & 0b0001); //down
-    *rowptr += (expand >> 3 & 0b0001); //up
-
-    new_cells = new_universe(*rowptr, *colptr); //this function could change row/col
-    //populate_border(new_cells, old_row, old_col, border, expand);
-    free(border);
-
-    //TODO old universe
-
-    for (j = (expand >> 3 & 0b0001); j < *rowptr; j++) {
-        int     old_j = j - (expand >> 3 & 0b0001);
-        for (i = (expand >> 1 & 0b0001); i < *colptr; i++) {
-            int     old_i = i - (expand >> 1 & 0b0001);
-            new_cells[j][i] = iter_cell(cells, old_j, old_i, old_row, old_col);
+    for (j = 0; j < *rowptr; j++) {
+        for (i = 0; i < *colptr; i++) {
+            cells[j][i] = iter_cell(cells, i, j, *colptr, *rowptr);
         }
     }
-
-    tmp2 = cells; //memory freeing
-    i = old_row;
-    while (i--)
-    {
-        free(*cells);
-        cells++;
-    }
-    free(tmp2);
-
-    return new_cells;
 }
 
 int         **get_generation(int **cells, int generations, int *rowptr, int *colptr) {
