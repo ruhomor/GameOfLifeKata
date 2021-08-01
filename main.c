@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 
 int         rules(int neighbours, int own_state) {
@@ -83,13 +84,20 @@ int         iter_cell(int **cells, int x, int y, int cols, int rows) {
     cols = min(cols - 1, x + 1);
     rows = min(rows - 1, y + 1);
     for (j = max(0, y - 1);  j <= rows; j++) {
-        for (i = max(0, x - 1), i <= cols; i++) {
-            if (!((i == x) && (j == y)))
-                neighbours++;
+        for (i = max(0, x - 1); i <= cols; i++) {
+            if (!((i == x) && (j == y))) {
+                if (cells[j][i] == 1)
+                {
+                    neighbours++;
+                    if ((x == 1) && (y == 1))
+                        printf("NEI: i: %d j: %d\n", i, j);
+                }
+            }
             else
                 own_state = cells[y][x];
         }
     }
+    //printf("x: %d y: %d n: %d\n", x, y, neighbours);
     return rules(neighbours, own_state);
 }
 
@@ -100,25 +108,27 @@ int         **step(int **cells, int *rowptr, int *colptr) {
     //expand
     //populate border
     //contract
+    int     **new_cells = new_universe(*rowptr, *colptr);
     int     *top_border = alloc_border(*colptr);
     int     *bot_border = alloc_border(*colptr);
     int     *left_border = alloc_border(*rowptr);
     int     *right_border = alloc_border(*rowptr);
     int     i, j;
 
-    for (i = -1; i <= *colptr; i++) {
+    for (i = -1; i <= *colptr; i++) { //eval horizontal borders
         top_border[i] = iter_cell(cells, i, -1, *colptr, *rowptr);
-        bot_border[i] = iter_cell(cells, i, *rowptr + 1, *colptr, *rowptr);
+        bot_border[i] = iter_cell(cells, i, *rowptr, *colptr, *rowptr);
     }
-    for (j = -1; j <= *rowptr; j++) {
+    for (j = -1; j <= *rowptr; j++) { //eval vertical borders
         left_border[j] = iter_cell(cells, -1, j, *colptr, *rowptr);
-        right_border[j] = iter_cell(cells, *colptr + 1, j, *colptr, *rowptr);
+        right_border[j] = iter_cell(cells, *colptr, j, *colptr, *rowptr);
     }
-    for (j = 0; j < *rowptr; j++) {
+    for (j = 0; j < *rowptr; j++) { //eval self
         for (i = 0; i < *colptr; i++) {
-            cells[j][i] = iter_cell(cells, i, j, *colptr, *rowptr);
+            new_cells[j][i] = iter_cell(cells, i, j, *colptr, *rowptr); //optimize?
         }
     }
+    return cells;
 }
 
 int         **get_generation(int **cells, int generations, int *rowptr, int *colptr) {
