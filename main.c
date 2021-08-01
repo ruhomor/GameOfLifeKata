@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <unistd.h>
 #define LEFT 0b0001
 #define RIGHT 0b0010
@@ -33,7 +32,7 @@ int         **init_universe(int **cells, int rows, int cols) {
 }
 
 void        print_universe(int **cells, int rows, int cols) {
-    char    *str = (typeof(str))malloc(sizeof(*str) * cols); //TODO no memalloc check
+    char    *str = (char*)malloc(sizeof(*str) * cols); //TODO no memalloc check
     char    *tmp = str;
     int     i, j;
 
@@ -56,12 +55,12 @@ int         **new_universe(int rows, int cols) {
     int     **tmp;
     int     i;
 
-    if (!(cells = (typeof(cells))malloc(sizeof(*cells) * (rows))))
+    if (!(cells = (int**)malloc(sizeof(*cells) * (rows))))
         return NULL;
     tmp = cells;
     i = rows;
     while (i--) {
-        if (!(*tmp = (typeof(*tmp))malloc(sizeof(**tmp) * (cols))))
+        if (!(*tmp = (int*)malloc(sizeof(**tmp) * (cols))))
             return NULL;
         tmp++;
     }
@@ -97,7 +96,6 @@ int         iter_cell(int **cells, int x, int y, int cols, int rows) {
                 own_state = cells[y][x];
         }
     }
-    //printf("x: %d y: %d n: %d\n", x, y, neighbours);
     return rules(neighbours, own_state);
 }
 
@@ -222,11 +220,11 @@ int                 **expand(int **cells, t_borders borders, int *rowptr, int *c
     expanded_universe = new_universe(*rowptr, *colptr);
     copy_universe_exp(cells, expanded_universe, expand, old_rows, old_cols);
     destroy_universe(cells, old_rows);
-    printf("\n");
-    printf("BEFORE BORDERS\n");
-    print_universe(expanded_universe, *rowptr, *colptr);
-    printf("\n");
     populate_borders(expanded_universe, borders, expand, *rowptr, *colptr);
+    free(borders.top_border);
+    free(borders.bot_border);
+    free(borders.left_border);
+    free(borders.right_border);
     return expanded_universe;
 }
 
@@ -328,7 +326,7 @@ int         **get_generation(int **cells, int generations, int *rowptr, int *col
 }
 
 int         main() {
-    int     rows = 3, cols = 3;
+    int     rows = 6, cols = 6;
     int     **universe = new_universe(rows, cols);
     int     **tmp;
     int     **tmp2;
@@ -341,19 +339,19 @@ int         main() {
     universe[2][2] = 1;
 */
 
-    universe[0][2] = 1; //..# RIGHT TEST
-    universe[1][0] = 1; //#.#
-    universe[1][2] = 1; //.##
-    universe[2][1] = 1;
-    universe[2][2] = 1;
+    universe[3][5] = 1; //..# RIGHT TEST
+    universe[4][3] = 1; //#.#
+    universe[4][5] = 1; //.##
+    universe[5][4] = 1;
+    universe[5][5] = 1;
 
-/*
-    universe[0][0] = 1; //#.. LEFT TEST
-    universe[1][0] = 1; //#.#
-    universe[1][2] = 1; //##.
+
+    universe[0][0] = 1; //##. LEFT TEST
+    universe[0][1] = 1; //#.#
+    universe[1][0] = 1; //#..
+    universe[1][2] = 1;
     universe[2][0] = 1;
-    universe[2][1] = 1;
-*/
+
 /*
     universe[0][0] = 1; //### UP TEST
     universe[0][1] = 1; //#..
@@ -365,11 +363,8 @@ int         main() {
     tmp = universe;
     print_universe(universe, rows, cols);
     write(1, "\n", 1);
-    while (1) {
-        print_universe(tmp = get_generation(tmp, 1, &rows, &cols), rows, cols);
-        write(1, "\n", 1);
-        getchar();
-    }
+    print_universe(tmp = get_generation(tmp, 100, &rows, &cols), rows, cols);
+    write(1, "\n", 1);
     tmp2 = tmp;
     while (i--)
     {
