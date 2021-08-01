@@ -5,6 +5,8 @@
 #define TOP 0b0100
 #define BOTTOM 0b1000
 
+#include <stdio.h>
+
 int         rules(int neighbours, int own_state) {
     if (own_state) //alive rules
     {
@@ -320,6 +322,9 @@ int             **step(int **cells, int *rowptr, int *colptr) {
 }
 
 int         **get_generation(int **cells, int generations, int *rowptr, int *colptr) {
+    //int     **copy = new_universe(*rowptr, *colptr);
+
+    //copy_universe_exp(cells, copy, 0, *rowptr, *colptr);
     while (generations--)
         cells = step(cells, rowptr, colptr);
     return cells;
@@ -339,18 +344,19 @@ int         main() {
     universe[2][2] = 1;
 */
 
-    universe[3][5] = 1; //..# RIGHT TEST
+    universe[3][5] = 1; //..# RIGHT-DOWN TEST
     universe[4][3] = 1; //#.#
     universe[4][5] = 1; //.##
     universe[5][4] = 1;
     universe[5][5] = 1;
 
 
-    universe[0][0] = 1; //##. LEFT TEST
-    universe[0][1] = 1; //#.#
-    universe[1][0] = 1; //#..
+    universe[0][0] = 1; //#0. LEFT-UP TEST
+    universe[0][1] = 0; //#.#
+    universe[1][0] = 1; //#1.
     universe[1][2] = 1;
     universe[2][0] = 1;
+    universe[2][1] = 1;
 
 /*
     universe[0][0] = 1; //### UP TEST
@@ -361,16 +367,12 @@ int         main() {
 */
     i = rows;
     tmp = universe;
-    print_universe(universe, rows, cols);
+    print_universe(tmp, rows, cols);
     write(1, "\n", 1);
-    print_universe(tmp = get_generation(tmp, 100, &rows, &cols), rows, cols);
-    write(1, "\n", 1);
-    tmp2 = tmp;
-    while (i--)
-    {
-        free(*tmp);
-        tmp++;
+    while (1) {
+        print_universe(tmp = get_generation(tmp, 1, &rows, &cols), rows, cols);
+        write(1, "\n", 1);
+        getchar();
     }
-    free(tmp2);
     return 0;
 }
