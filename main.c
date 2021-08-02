@@ -5,7 +5,7 @@
 #define TOP 0b0100
 #define BOTTOM 0b1000
 
-#include <stdio.h>
+#include <stdio.h> //testing
 
 int         rules(int neighbours, int own_state) {
     if (own_state) //alive rules
@@ -331,48 +331,41 @@ int         **get_generation(int **cells, int generations, int *rowptr, int *col
 }
 
 int         main() {
-    int     rows = 6, cols = 6;
+    int     rows = 9, cols = 7;
     int     **universe = new_universe(rows, cols);
     int     **tmp;
     int     **tmp2;
     int     i;
-/*
-    universe[0][1] = 1; //.#. DOWN TEST
-    universe[1][2] = 1; //..#
-    universe[2][0] = 1; //###
-    universe[2][1] = 1;
-    universe[2][2] = 1;
-*/
 
-    universe[3][5] = 1; //..# RIGHT-DOWN TEST
-    universe[4][3] = 1; //#.#
-    universe[4][5] = 1; //.##
-    universe[5][4] = 1;
-    universe[5][5] = 1;
-
-
-    universe[0][0] = 1; //#0. LEFT-UP TEST
-    universe[0][1] = 0; //#.#
-    universe[1][0] = 1; //#1.
+    universe[0][2] = 1;
+    universe[0][3] = 1;
+    universe[0][4] = 1;
     universe[1][2] = 1;
-    universe[2][0] = 1;
-    universe[2][1] = 1;
+    universe[1][4] = 1;
+    universe[2][2] = 1;
+    universe[2][4] = 1;
+    universe[3][3] = 1;
+    universe[4][0] = 1;
+    universe[4][2] = 1;
+    universe[4][3] = 1;
+    universe[4][4] = 1;
+    universe[5][1] = 1;
+    universe[5][3] = 1;
+    universe[5][5] = 1;
+    universe[6][3] = 1;
+    universe[6][6] = 1;
+    universe[7][2] = 1;
+    universe[7][4] = 1;
+    universe[8][2] = 1;
+    universe[8][4] = 1;
 
-/*
-    universe[0][0] = 1; //### UP TEST
-    universe[0][1] = 1; //#..
-    universe[0][2] = 1; //.#.
-    universe[1][0] = 1;
-    universe[2][1] = 1;
-*/
-    i = rows;
     tmp = universe;
     print_universe(tmp, rows, cols);
     write(1, "\n", 1);
+    getchar();
     while (1) {
         print_universe(tmp = get_generation(tmp, 1, &rows, &cols), rows, cols);
         write(1, "\n", 1);
-    //print_universe(tmp = get_generation(tmp, 6, &rows, &cols), rows, cols);
         getchar();
     }
     return 0;
